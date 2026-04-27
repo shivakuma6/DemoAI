@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="login-section" class="section">
+            <h1>Login</h1>
+            <input id="username" type="text" placeholder="Username">
+            <input id="password" type="password" placeholder="Password">
+            <button id="login-btn" class="btn-primary">Login</button>
+            <p id="login-error" style="color:red; display:none;">Invalid credentials</p>
+        </div>
+
+        <!-- Products Section -->
+        <div id="products-section" class="section hidden">
+            <h1>Products <span id="cart-count">0</span></h1>
+            
+            <div class="product-card">
+                <div>
+                    <h3>Laptop</h3>
+                    <p>$999</p>
+                </div>
+                <button class="add-to-cart">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <div>
+                    <h3>Smartphone</h3>
+                    <p>$499</p>
+                </div>
+                <button class="add-to-cart-typo">Add to Cart</button>
+            </div>
+
+            <button id="view-cart-btn" class="btn-primary">View Cart</button>
+        </div>
+
+        <!-- Cart Section -->
+        <div id="cart-section" class="section hidden">
+            <h1>Shopping Cart</h1>
+            <ul id="cart-items"></ul>
+            <p id="cart-total">Total: $0</p>
+            <button id="checkout-btn" class="btn-primary">Checkout</button>
+            <button id="back-btn" class="btn-primary">Back to Products</button>
+        </div>
+
+        <!-- Success Section -->
+        <div id="success-section" class="section hidden">
+            <h1>Order placed successfully!</h1>
+            <p>Thank you for your purchase.</p>
+            <button id="restart-btn" class="btn-primary">Shop Again</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

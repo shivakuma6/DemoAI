@@ -1,0 +1,133 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  test:
+    name: Run Playwright Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers and dependencies
+        run: npx playwright install --with-deps
+
+      - name: Run tests
+        run: npm run test:ci
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  pr-analysis:
+    name: AI-Style PR Analysis
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze changed files
+        run: |
+          echo "## Changed Files Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Files Changed" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only origin/main
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Impacted Areas" >> $GITHUB_STEP_SUMMARY
+          CHANGED_FILES=$(git diff --name-only origin/main)
+          
+          if echo "$CHANGED_FILES" | grep -qE '(app\.js|index\.html)'; then
+            echo "- **Frontend Logic & Markup**: Login, cart, checkout functionality" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE 'styles\.css'; then
+            echo "- **Styling**: Layout, colors, responsive design" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE '(package\.json|\.gitignore)'; then
+            echo "- **Configuration**: Dependencies, build scripts, git configuration" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE 'tests/'; then
+            echo "- **Test Coverage**: Login, checkout, and cart functionality tests" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Suggestions" >> $GITHUB_STEP_SUMMARY
+          
+          if echo "$CHANGED_FILES" | grep -qE '(app\.js|index\.html)'; then
+            echo "- Run login.spec.js to verify authentication flow" >> $GITHUB_STEP_SUMMARY
+            echo "- Run checkout.spec.js to verify cart and payment flow" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE 'styles\.css'; then
+            echo "- Verify visual regression with Playwright screenshot comparisons" >> $GITHUB_STEP_SUMMARY
+            echo "- Test responsive design on mobile and tablet viewports" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE 'tests/'; then
+            echo "- Run all tests to ensure test suite is not broken" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
